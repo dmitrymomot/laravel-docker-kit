@@ -1,0 +1,83 @@
+version: "3"
+services:
+
+  nginx:
+    image: nginx:1.15
+    restart: always
+    depends_on:
+    - php
+    volumes:
+    - .:/var/www/
+    - ./docker/nginx/cors_response.inc:/etc/nginx/conf.d/cors_response.inc
+
+  php:
+    restart: always
+    build: ./docker/php
+    volumes:
+    - .:/var/www/
+    - ./docker/php/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
+    - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
+    - ~/.composer-docker:/root/.composer
+    - ~/.bash_history:/root/.bash_history
+    depends_on:
+    - mariadb
+    - redis
+    - mongodb
+    - minio
+    - cron
+    - horizon
+
+  horizon:
+    build: docker/horizon
+    volumes:
+    - .:/var/www:delegated
+    - ./docker/horizon/horizon.conf:/etc/supervisord.d/horizon.conf
+
+  cron:
+    build: docker/cron
+    volumes:
+    - .:/var/www/
+
+  mariadb:
+    image: mariadb
+    volumes:
+    - database_data:/var/lib/mysql
+    ports:
+    - '3307:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: dbpass
+      MYSQL_DATABASE: dbname
+
+  redis:
+    image: redis
+    volumes:
+    - redis-data:/data
+
+  mongodb:
+    image: mongo
+    environment:
+      STORAGE_ENGINE: wiredTiger
+
+  pma:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    depends_on:
+    - mariadb
+    links:
+    - mariadb:db
+
+  minio:
+    image: minio/minio
+    restart: always
+    volumes:
+    - minio_data:/data
+    entrypoint: sh
+    command: -c 'mkdir -p /data/${AWS_BUCKET} && /usr/bin/minio server /data'
+    environment:
+      MINIO_ACCESS_KEY: ${AWS_KEY}
+      MINIO_SECRET_KEY: ${AWS_SECRET}
+
+volumes:
+  database_data:
+  redis-data:
+  minio_data:
