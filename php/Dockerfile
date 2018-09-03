@@ -26,6 +26,7 @@ RUN curl -s -f -L -o /tmp/installer.php https://getcomposer.org/installer && \
     composer --ansi --version  --no-interaction
 
 RUN echo "alias phpunit='php /var/www/vendor/bin/phpunit'" >> /root/.bashrc
+RUN echo "alias artisan='php /var/www/artisan'" >> /root/.bashrc
 RUN echo "alias phpcs='vendor/bin/phpcs --extensions=php --standard=config/codeQuality/phpcs.xml --error-severity=1 --warning-severity=8 app'" >> /root/.bashrc
 RUN echo "alias phpmd='vendor/bin/phpmd app text config/codeQuality/phpmd.xml --minimumpriority warnings'" >> /root/.bashrc
 RUN echo "alias phpcpd='vendor/bin/phpcpd app'" >> /root/.bashrc
